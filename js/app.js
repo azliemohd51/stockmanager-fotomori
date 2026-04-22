@@ -69,6 +69,7 @@ function renderTable(products) {
             <td class="actions">
                 <button class="btn-sm btn-in" onclick="openStockModal(${p.id},'in','${esc(p.name)}')">+ In</button>
                 <button class="btn-sm btn-out" onclick="openStockModal(${p.id},'out','${esc(p.name)}')">- Out</button>
+                <button class="btn-sm btn-edit" onclick="openEditModal(${p.id})">Edit</button>
                 <button class="btn-sm btn-del" onclick="deleteProduct(${p.id},'${esc(p.name)}')">Delete</button>
             </td>
         </tr>`;
@@ -139,6 +140,40 @@ async function submitStock(e) {
     closeModal('modal-stock');
     showToast('Stock updated!', 'success');
     loadProducts();
+}
+
+// --- Edit Product ---
+function openEditModal(id) {
+    const p = allProducts.find(p => p.id === id);
+    if (!p) return;
+    document.getElementById('edit-error').textContent = '';
+    document.getElementById('edit-id').value = p.id;
+    document.getElementById('edit-name').value = p.name;
+    document.getElementById('edit-sku').value = p.sku;
+    document.getElementById('edit-category').value = p.category;
+    document.getElementById('edit-min-stock').value = p.min_stock;
+    document.getElementById('edit-unit-price').value = Number(p.unit_price).toFixed(2);
+    showModal('modal-edit');
+}
+
+async function submitEditProduct(e) {
+    e.preventDefault();
+    const errEl = document.getElementById('edit-error');
+    errEl.textContent = '';
+    const data = {
+        id: parseInt(document.getElementById('edit-id').value),
+        name: document.getElementById('edit-name').value.trim(),
+        sku: document.getElementById('edit-sku').value.trim(),
+        category: document.getElementById('edit-category').value.trim() || 'General',
+        min_stock: parseInt(document.getElementById('edit-min-stock').value) || 10,
+        unit_price: parseFloat(document.getElementById('edit-unit-price').value) || 0
+    };
+    const res = await request('edit_product', 'POST', data);
+    if (res.error) { errEl.textContent = res.error; return; }
+    closeModal('modal-edit');
+    showToast('Product updated!', 'success');
+    loadProducts();
+    loadCategories();
 }
 
 // --- Delete ---
@@ -242,6 +277,7 @@ document.querySelectorAll('th.sortable').forEach(th => {
 // --- Init ---
 document.getElementById('add-form').addEventListener('submit', submitAddProduct);
 document.getElementById('stock-form').addEventListener('submit', submitStock);
+document.getElementById('edit-form').addEventListener('submit', submitEditProduct);
 
 loadProducts();
 loadCategories();

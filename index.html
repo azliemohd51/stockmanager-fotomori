@@ -192,6 +192,8 @@ th.sortable:not(.asc):not(.desc) .sort-icon::after { content: '⇅'; }
 .btn-out:hover { background: #fecaca; }
 .btn-del { background: #f1f2f7; color: var(--text-muted); }
 .btn-del:hover { background: #fee2e2; color: #b91c1c; }
+.btn-edit { background: #eff0fb; color: var(--primary); }
+.btn-edit:hover { background: #dddff5; }
 .actions { display: flex; gap: 6px; }
 
 /* ── Modal ── */
@@ -456,6 +458,46 @@ textarea:focus { border-color: var(--primary); }
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('modal-stock')">Cancel</button>
                 <button type="submit" class="btn btn-success" id="stock-btn">Update Stock</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Edit Product -->
+<div class="modal" id="modal-edit">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title">Edit Product</div>
+            <button class="close-btn" onclick="closeModal('modal-edit')">✕</button>
+        </div>
+        <form id="edit-form">
+            <input type="hidden" id="edit-id">
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Product Name</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label>SKU</label>
+                    <input type="text" id="edit-sku" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" id="edit-category">
+                </div>
+                <div class="form-group">
+                    <label>Min Stock (Alert)</label>
+                    <input type="number" id="edit-min-stock" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Unit Price (RM)</label>
+                    <input type="number" id="edit-unit-price" min="0" step="0.01">
+                </div>
+            </div>
+            <div class="error-msg" id="edit-error"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
         </form>
     </div>

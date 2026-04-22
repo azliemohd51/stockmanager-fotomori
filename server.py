@@ -179,6 +179,23 @@ def sb_api(action, body):
         }).execute()
         return jsonify({'success': True, 'product': updated})
 
+    elif action == 'edit_product':
+        pid        = int(body.get('id') or 0)
+        name       = (body.get('name') or '').strip()
+        sku        = (body.get('sku') or '').strip()
+        if not pid or not name or not sku:
+            return jsonify({'error': 'Invalid input'}), 400
+        exists = sb.table('products').select('id').eq('sku', sku).neq('id', pid).execute().data
+        if exists:
+            return jsonify({'error': 'SKU already used by another product'}), 400
+        updated = sb.table('products').update({
+            'name': name, 'sku': sku,
+            'category': (body.get('category') or 'General').strip(),
+            'min_stock': int(body.get('min_stock') or 10),
+            'unit_price': float(body.get('unit_price') or 0)
+        }).eq('id', pid).execute().data
+        return jsonify({'success': True, 'product': updated[0] if updated else {}})
+
     elif action == 'delete_product':
         pid = int(request.args.get('id') or 0)
         if not pid:
@@ -259,6 +276,21 @@ def sqlite_api(action, body):
             db.execute('INSERT INTO stock_movements (product_id,type,quantity,notes) VALUES (?,?,?,?)', (product_id, stype, quantity, notes))
             db.commit()
             return jsonify({'success': True, 'product': dict(db.execute('SELECT * FROM products WHERE id=?', (product_id,)).fetchone())})
+
+        elif action == 'edit_product':
+            pid        = int(body.get('id') or 0)
+            name       = (body.get('name') or '').strip()
+            sku        = (body.get('sku') or '').strip()
+            if not pid or not name or not sku:
+                return jsonify({'error': 'Invalid input'}), 400
+            if db.execute('SELECT id FROM products WHERE sku=? AND id!=?', (sku, pid)).fetchone():
+                return jsonify({'error': 'SKU already used by another product'}), 400
+            db.execute("""UPDATE products SET name=?, sku=?, category=?, min_stock=?,
+                unit_price=?, updated_at=datetime('now') WHERE id=?""",
+                (name, sku, (body.get('category') or 'General').strip(),
+                 int(body.get('min_stock') or 10), float(body.get('unit_price') or 0), pid))
+            db.commit()
+            return jsonify({'success': True})
 
         elif action == 'delete_product':
             pid = int(request.args.get('id') or 0)
