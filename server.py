@@ -17,28 +17,37 @@ USE_POSTGRES  = bool(DATABASE_URL)
 # Hides the SQLite vs PostgreSQL differences behind a uniform interface.
 
 if USE_POSTGRES:
-    import psycopg2
-    import psycopg2.extras
+    import pg8000
+    from urllib.parse import urlparse
 
     def get_db():
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        url = urlparse(DATABASE_URL)
+        conn = pg8000.connect(
+            host=url.hostname,
+            port=url.port or 5432,
+            database=url.path[1:],
+            user=url.username,
+            password=url.password,
+            ssl_context=True
+        )
         return conn
 
     def query(conn, sql, params=()):
         """Run SELECT, return list of dicts."""
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql, params)
-            return [dict(r) for r in cur.fetchall()]
+        cur = conn.cursor()
+        cur.execute(sql, list(params))
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, row)) for row in cur.fetchall()]
 
     def execute(conn, sql, params=()):
         """Run INSERT/UPDATE/DELETE, return lastrowid."""
-        with conn.cursor() as cur:
-            cur.execute(sql, params)
-            try:
-                row = cur.fetchone()
-                return row[0] if row else None
-            except Exception:
-                return None
+        cur = conn.cursor()
+        cur.execute(sql, list(params))
+        try:
+            row = cur.fetchone()
+            return row[0] if row else None
+        except Exception:
+            return None
 
     P = '%s'   # placeholder
 
