@@ -21,7 +21,7 @@ if USE_POSTGRES:
     import psycopg2.extras
 
     def get_db():
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
         return conn
 
     def query(conn, sql, params=()):
@@ -291,8 +291,10 @@ def api():
         conn.close()
 
 
+# Always init DB on startup (works for both direct run and Vercel serverless)
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     port = int(os.environ.get('PORT', 8080))
     mode = 'Supabase (PostgreSQL)' if USE_POSTGRES else 'SQLite (local)'
     print(f'\n  StockManager for Fotomori — {mode}')
